@@ -14,7 +14,7 @@
           <h3 *ngIf="dish">{{dish.name | uppercase}}</h3>
         </mat-card-title>
       </mat-card-header>
-      <img mat-card-image src={{dish.image}} alt={{dish.name}}>
+      <img mat-card-image src="{{BaseURL + dish.image}}" alt={{dish.name}}>
       <mat-card-content>
         <p>{{dish.description}}
         </p>
@@ -45,10 +45,54 @@
           <span>-- {{cmnt.author}} {{cmnt.date | date}}</span>
         </p>
       </mat-list-item>
+      
+      <div [hidden]="!feedbackForm.valid">
+        <mat-list-item>
+          <p matLine>
+            <span> {{feedbackForm.value.comment}} </span>
+          </p>
+          <p matLine>
+            <span>{{feedbackForm.value.rating}} Stars</span>
+          </p>
+          <p matLine>
+            <span>-- {{feedbackForm.value.author}}</span>
+          </p>
+        </mat-list-item>
+      </div>
+    
     </mat-list>
+
+        
+  
+    <form novalidate [formGroup]="feedbackForm" #commentform="ngForm" (ngSubmit)="onSubmit()" >
+      <p>
+        <mat-form-field class="full-width">
+          <input matInput formControlName="author" placeholder="Name" type="text" required>
+          <mat-error *ngIf="formErrors.author">{{formErrors.author}}</mat-error>
+        </mat-form-field>
+      </p>
+      <p>
+        <mat-slider formControlName="rating" min="1" max="5" step="1" value="5" thumbLabel tickInterval="1" required></mat-slider>
+      </p>
+      <p>  
+        <mat-form-field class="full-width">
+          <textarea matInput formControlName="comment" placeholder="Your Comment" type="text" rows="12" required></textarea>
+          <mat-error *ngIf="formErrors.comment">{{formErrors.comment}}</mat-error>
+        </mat-form-field>
+      </p>
+
+      <button type="submit" mat-button class="background-primary text-floral-white"
+        [disabled]="!feedbackForm.valid">Submit</button>
+    </form>
+
   </div>
 
-  <div [hidden]="dish">
+  <div [hidden]="dish || errMess">
     <mat-spinner></mat-spinner><h4>Loading . . . Please Wait</h4>
   </div>
+  <div fxFlex *ngIf="errMess">
+    <h2>Error</h2>
+    <h4>{{errMess}}</h4>
+  </div>
+
 </div>
