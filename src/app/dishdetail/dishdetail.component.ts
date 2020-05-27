@@ -4,8 +4,7 @@ import { DishService } from '../services/dish.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ViewChild } from '@angular/core';
 import { Comment } from '../shared/comment';
-
-
+import { visibility , flyInOut, expand} from '../animations/app.animation';
 import { Params, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { switchMap } from 'rxjs/operators';
@@ -14,13 +13,24 @@ import { switchMap } from 'rxjs/operators';
 @Component({
   selector: 'app-dishdetail',
   templateUrl: './dishdetail.component.html',
-  styleUrls: ['./dishdetail.component.scss']
+  styleUrls: ['./dishdetail.component.scss'],
+  host: {
+    '[@flyInOut]': 'true',
+    'style': 'display: block;'
+    },
+    animations: [
+      visibility(),
+      flyInOut(),
+      expand()
+    ]
 })
 export class DishdetailComponent implements OnInit {
 
   @ViewChild('commentform') feedbackFormDirective;
 
+  visibility = 'shown';
   dish: Dish;
+  dishcopy: Dish;
   dishIds: string[];
   prev: string;
   next: string;
@@ -40,8 +50,8 @@ export class DishdetailComponent implements OnInit {
 
   ngOnInit() {
     this.dishservice.getDishIds().subscribe(dishIds => this.dishIds = dishIds);
-    this.route.params.pipe(switchMap((params: Params) => this.dishservice.getDish(params['id'])))
-    .subscribe(dish => { this.dish = dish; this.setPrevNext(dish.id); }, errmess => this.errMess = <any>errmess);
+    this.route.params.pipe(switchMap((params: Params) => {this.visibility='hidden'; return this.dishservice.getDish(params['id']);}))
+    .subscribe(dish => { this.dish = dish; this.dishcopy = dish; this.setPrevNext(dish.id); this.visibility='shown' }, errmess => this.errMess = <any>errmess);
   }
 
   setPrevNext(dishId: string) {
@@ -84,16 +94,21 @@ export class DishdetailComponent implements OnInit {
 
   onSubmit() {
     this.feedback = this.feedbackForm.value;
+    this.feedback.date = Date();
     console.log(this.feedback);
+    this.dishcopy.comments.push(this.feedback);
+    this.dishservice.putDish(this.dishcopy)
+      .subscribe(dish => {
+        this.dish = dish; this.dishcopy = dish;
+      },
+      errmess => { this.dish = null; this.dishcopy = null; this.errMess = <any>errmess; });
+    this.feedbackFormDirective.resetForm({rating: 5});
     this.feedbackForm.reset({
       author: '',
       rating: 5,
       comment: '',
       date: ''
     });
-    this.feedbackFormDirective.resetForm({rating: 5});
-    this.feedback.date = Date();
-    this.dish.comments.push(this.feedback);
   }
   
   onValueChanged(data?: any) {
