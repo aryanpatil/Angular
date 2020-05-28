@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Feedback, ContactType } from '../shared/feedback';
 import { ViewChild } from '@angular/core';
-import { flyInOut } from '../animations/app.animation';
+import { flyInOut , expand} from '../animations/app.animation';
+import { FeedbackService } from '../services/feedback.service';
 
 @Component({
   selector: 'app-contact',
@@ -13,7 +14,8 @@ import { flyInOut } from '../animations/app.animation';
     'style': 'display: block;'
     },
     animations: [
-      flyInOut()
+      flyInOut(),
+      expand()
     ]
 })
 export class ContactComponent implements OnInit {
@@ -22,9 +24,14 @@ export class ContactComponent implements OnInit {
 
   feedbackForm: FormGroup;
   feedback: Feedback;
+  feedbackcopy: Feedback;
   contactType = ContactType;
+  errMess: string;
+  showform = true;
+  showfeed = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private feedbackservice: FeedbackService) {
     this.createForm();
   }
 
@@ -77,8 +84,28 @@ export class ContactComponent implements OnInit {
   }
 
   onSubmit() {
+    this.showform = false;
     this.feedback = this.feedbackForm.value;
     console.log(this.feedback);
+    this.feedbackservice
+  .submitFeedback(this.feedback)
+  .subscribe(feedback => {
+
+              this.feedbackservice.getFeedback()
+              .subscribe( feedback => this.feedback = feedback,
+              errmess => this.errMess = <any>errmess);
+              
+              this.feedback = feedback;
+              this.showfeed = true;
+              setTimeout(function() {
+                this.showform = true;
+                this.showfeed = false;
+                console.log(this.showform);
+              }.bind(this), 5000);} 
+            ,errmess => { this.feedback = null; this.errMess = <any>errmess;} );
+
+            
+
     this.feedbackForm.reset({
       firstname: '',
       lastname: '',
